@@ -12,7 +12,16 @@ import os
 from pathlib import Path
 
 from . import storage
-from .council import run_full_council, generate_conversation_title, stage1_collect_responses, stage2_collect_rankings, stage3_synthesize_final, calculate_aggregate_rankings, get_council_for_query
+from .council import (
+    stage1_collect_responses,
+    stage2_collect_rankings,
+    calculate_aggregate_rankings,
+    stage3_synthesize_final,
+    stage4_validate_chairman,
+    generate_conversation_title,
+    run_full_council,
+    get_council_for_query
+)
 from .config import COUNCIL_MODELS, CHAIRMAN_MODEL
 
 app = FastAPI(title="MetaReasoner API")
@@ -284,6 +293,25 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
                 else:
                     yield f"data: {json.dumps({'type': 'stage3_token', 'data': chunk})}\n\n"
             yield f"data: {json.dumps({'type': 'stage3_complete', 'data': stage3_result})}\n\n"
+
+            # Stage 4 Validation
+            yield f"data: {json.dumps({'type': 'stage4_start'})}\n\n"
+            validation_result = await stage4_validate_chairman(stage3_result["response"], request.content, council_models)
+            yield f"data: {json.dumps({'type': 'stage4_complete', 'data': validation_result})}\n\n"
+
+            if validation_result.get("triggered"):
+                critical_issues = [iss for iss in validation_result.get("issues", []) if iss.get("severity") == "critical"]
+                
+                # Re-run Stage 3 Synthesis with formatting fixes
+                yield f"data: {json.dumps({'type': 'stage3_start'})}\n\n"
+                stage3_result = None
+                async for chunk in stage3_synthesize_final(request.content, stage1_results, stage2_results, critical_issues=critical_issues):
+                    if isinstance(chunk, dict) and chunk.get("done"):
+                        stage3_result = {"model": chunk["model"], "response": chunk["response"]}
+                    else:
+                        yield f"data: {json.dumps({'type': 'stage3_token', 'data': chunk})}\n\n"
+                
+                yield f"data: {json.dumps({'type': 'stage3_complete', 'data': stage3_result})}\n\n"
 
             # Wait for title generation if it was started
             if title_task:

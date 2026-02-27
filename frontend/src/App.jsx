@@ -80,11 +80,15 @@ function App() {
         stage1: null,
         stage2: null,
         stage3: null,
-        metadata: null,
+        metadata: {
+          stage4_triggered: false,
+          stage4_issues: null
+        },
         loading: {
           stage1: false,
           stage2: false,
           stage3: false,
+          stage4: false,
         },
       };
 
@@ -165,6 +169,29 @@ function App() {
               const lastMsg = messages[messages.length - 1];
               lastMsg.stage3 = event.data;
               lastMsg.loading.stage3 = false;
+              return { ...prev, messages };
+            });
+            break;
+
+          case 'stage4_start':
+            setCurrentConversation((prev) => {
+              const messages = [...prev.messages];
+              const lastMsg = messages[messages.length - 1];
+              lastMsg.loading.stage4 = true;
+              return { ...prev, messages };
+            });
+            break;
+
+          case 'stage4_complete':
+            setCurrentConversation((prev) => {
+              const messages = [...prev.messages];
+              const lastMsg = messages[messages.length - 1];
+              lastMsg.metadata = {
+                ...lastMsg.metadata,
+                stage4_triggered: event.data.triggered,
+                stage4_issues: event.data.issues
+              };
+              lastMsg.loading.stage4 = false;
               return { ...prev, messages };
             });
             break;

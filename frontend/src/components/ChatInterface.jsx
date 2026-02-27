@@ -177,7 +177,21 @@ export default function ChatInterface({
                       <span>Running Stage 3: Final synthesis...</span>
                     </div>
                   )}
-                  {msg.stage3 && <Stage3 finalResponse={msg.stage3} />}
+                  {msg.loading?.stage4 && (
+                    <div className="stage-loading">
+                      <div className="spinner"></div>
+                      <span>Running Stage 4: Validating for hallucinations...</span>
+                    </div>
+                  )}
+                  {msg.stage3 && (
+                    <Stage3
+                      finalResponse={msg.stage3}
+                      validationStatus={{
+                        triggered: msg.metadata?.stage4_triggered,
+                        issues: msg.metadata?.stage4_issues
+                      }}
+                    />
+                  )}
                 </div>
               )}
             </div>

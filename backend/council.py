@@ -146,7 +146,8 @@ Now provide your evaluation:"""
 async def stage3_synthesize_final(
     user_query: str,
     stage1_results: List[Dict[str, Any]],
-    stage2_results: List[Dict[str, Any]]
+    stage2_results: List[Dict[str, Any]],
+    critical_issues: List[Dict[str, Any]] = None
 ) -> AsyncGenerator[Any, None]:
     """
     Stage 3: Chairman synthesizes final response (streaming).
@@ -178,7 +179,15 @@ STAGE 1 - Individual Responses:
 {stage1_text}
 
 STAGE 2 - Peer Rankings:
-{stage2_text}
+{stage2_text}"""
+
+    if critical_issues:
+        chairman_prompt += "\n\nCRITICAL FEEDBACK FROM PREVIOUS SYNTHESIS:\nThe council has reviewed your previous synthesis and identified the following critical issues that MUST be fixed:\n"
+        for issue in critical_issues:
+            chairman_prompt += f"- [{issue.get('type')}] {issue.get('description')}\n"
+        chairman_prompt += "\nPlease revise your synthesis to fix these issues. Provide a clear, well-reasoned final answer that represents the council's collective wisdom:"
+    else:
+        chairman_prompt += """
 
 Your task as Chairman is to synthesize all of this information into a single, comprehensive, accurate answer to the user's original question. Consider:
 - The individual responses and their insights
@@ -186,7 +195,6 @@ Your task as Chairman is to synthesize all of this information into a single, co
 - Any patterns of agreement or disagreement
 
 Provide a clear, well-reasoned final answer that represents the council's collective wisdom:"""
-
     messages = [{"role": "user", "content": chairman_prompt}]
 
     # Query the chairman model with streaming
@@ -200,6 +208,62 @@ Provide a clear, well-reasoned final answer that represents the council's collec
         "model": CHAIRMAN_MODEL,
         "done": True,
         "response": accumulated_text
+    }
+
+
+async def stage4_validate_chairman(chairman_response: str, user_query: str, council_models: List[str]) -> Dict[str, Any]:
+    """
+    Stage 4: Validate the Chairman's synthesis using the council models.
+    """
+    prompt = f"""You are validating a synthesized answer.
+
+Original Question: {user_query}
+Synthesized Answer: {chairman_response}
+
+Review the synthesized answer for factual errors, logical inconsistencies, or hallucinations.
+Return ONLY a JSON object with this exact schema:
+{{"issues": [{{"type": "factual_error"|"logical_inconsistency"|"hallucination"|"none", "description": "...", "severity": "critical"|"moderate"|"minor"|"none"}}]}}"""
+
+    messages = [
+        {"role": "system", "content": "You are a strict validation system. Only output valid JSON. Do not include markdown formatting or commentary outside the JSON."},
+        {"role": "user", "content": prompt}
+    ]
+
+    active_models = council_models if council_models is not None else COUNCIL_MODELS
+    responses = await query_models_parallel(active_models, messages)
+
+    needs_revision = False
+    all_issues = []
+
+    for model, response in responses.items():
+        if response is not None:
+            full_text = response.get('content', '').strip()
+            
+            clean_text = full_text
+            if clean_text.startswith("```json"):
+                clean_text = clean_text[7:]
+            elif clean_text.startswith("```"):
+                clean_text = clean_text[3:]
+            if clean_text.endswith("```"):
+                clean_text = clean_text[:-3]
+            clean_text = clean_text.strip()
+            
+            try:
+                data = json.loads(clean_text)
+                if isinstance(data, dict) and "issues" in data:
+                    issues = data["issues"]
+                    for issue in issues:
+                        if issue.get("type") != "none":
+                            if issue.get("severity") == "critical":
+                                needs_revision = True
+                            issue["model"] = model
+                            all_issues.append(issue)
+            except Exception:
+                pass
+
+    return {
+        "triggered": needs_revision,
+        "issues": all_issues
     }
 
 
@@ -433,5 +497,22 @@ async def run_full_council(user_query: str, council_models: List[str] = None) ->
         "aggregate_rankings": aggregate_rankings,
         "detected_category": detected_category
     }
+
+    # Stage 4 Validation on non-stream run
+    validation_result = await stage4_validate_chairman(stage3_result["response"], user_query, resolved_models)
+    metadata["stage4_triggered"] = validation_result["triggered"]
+    metadata["stage4_issues"] = validation_result["issues"]
+    
+    if validation_result["triggered"]:
+        critical_issues = [iss for iss in validation_result["issues"] if iss.get("severity") == "critical"]
+        
+        async for chunk in stage3_synthesize_final(
+            user_query,
+            stage1_results,
+            stage2_results,
+            critical_issues=critical_issues
+        ):
+            if isinstance(chunk, dict) and chunk.get("done"):
+                stage3_result = chunk
 
     return stage1_results, stage2_results, stage3_result, metadata
