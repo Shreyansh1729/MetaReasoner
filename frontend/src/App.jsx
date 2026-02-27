@@ -80,10 +80,7 @@ function App() {
         stage1: null,
         stage2: null,
         stage3: null,
-        metadata: {
-          stage4_triggered: false,
-          stage4_issues: null
-        },
+        metadata: null,
         loading: {
           stage1: false,
           stage2: false,
@@ -186,11 +183,11 @@ function App() {
             setCurrentConversation((prev) => {
               const messages = [...prev.messages];
               const lastMsg = messages[messages.length - 1];
-              lastMsg.metadata = {
-                ...lastMsg.metadata,
-                stage4_triggered: event.data.triggered,
-                stage4_issues: event.data.issues
-              };
+              if (!lastMsg.metadata) {
+                lastMsg.metadata = {};
+              }
+              lastMsg.metadata.stage4_triggered = event.data.triggered;
+              lastMsg.metadata.stage4_issues = event.data.issues;
               lastMsg.loading.stage4 = false;
               return { ...prev, messages };
             });
