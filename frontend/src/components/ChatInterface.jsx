@@ -115,22 +115,11 @@ export default function ChatInterface({
 
   return (
     <div className="chat-interface">
-      <div className="messages-container" style={{ position: 'relative' }}>
+      <div className="messages-container">
         {conversation.messages.length > 0 && (
           <button
+            className="export-btn"
             onClick={handleExport}
-            style={{
-              position: 'absolute',
-              top: '16px',
-              right: '16px',
-              padding: '6px 12px',
-              backgroundColor: '#fff',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-              zIndex: 10
-            }}
           >
             Export to MD
           </button>
@@ -164,7 +153,7 @@ export default function ChatInterface({
                       <span>Running Stage 1: Collecting individual responses...</span>
                     </div>
                   )}
-                  {msg.stage1 && <Stage1 responses={msg.stage1} />}
+                  {msg.stage1 && <Stage1 responses={msg.stage1} metadata={msg.metadata} />}
 
                   {/* Stage 2 */}
                   {msg.loading?.stage2 && (
@@ -206,14 +195,11 @@ export default function ChatInterface({
       </div>
 
       {/* --- CHANGED --- Added Model Selector Panel */}
-      <div className="model-selector-panel" style={{ padding: '10px 20px', borderTop: '1px solid #eee' }}>
-        <div className="model-selector-header" style={{ marginBottom: '8px', fontSize: '0.9rem', fontWeight: 600 }}>Select Council Models:</div>
-        <div className="model-badges" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+      <div className="model-selector-panel">
+        <div className="model-selector-header">Select Council Models:</div>
+        <div className="model-badges">
           {availableModels.map(model => (
-            <label key={model} className="model-badge" style={{
-              display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem',
-              padding: '4px 8px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '4px', cursor: 'pointer'
-            }}>
+            <label key={model} className="model-badge">
               <input
                 type="checkbox"
                 checked={selectedModels.includes(model)}
@@ -225,7 +211,7 @@ export default function ChatInterface({
           ))}
         </div>
         {selectedModels.length < 2 && (
-          <div className="model-warning" style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '6px' }}>
+          <div className="model-warning">
             Warning: At least 2 models must be selected for consensus to work.
           </div>
         )}

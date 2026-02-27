@@ -2,7 +2,7 @@ import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import './Stage1.css';
 
-export default function Stage1({ responses }) {
+export default function Stage1({ responses, metadata }) {
   const [activeTab, setActiveTab] = useState(0);
 
   if (!responses || responses.length === 0) {
@@ -12,18 +12,16 @@ export default function Stage1({ responses }) {
   return (
     <div className="stage stage1">
       {/* --- CHANGED --- Added active council badges to the header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-        <h3 className="stage-title" style={{ margin: 0 }}>Stage 1: Individual Responses</h3>
-        <div className="active-council-badges" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+      <div className="stage1-header">
+        <h3 className="stage-title">Stage 1: Individual Responses</h3>
+        <div className="active-council-badges">
+          {metadata?.detected_category && (
+            <span className="detected-category-badge" title="Auto-detected query category">
+              {metadata.detected_category}
+            </span>
+          )}
           {responses.map((resp, idx) => (
-            <span key={idx} className="council-badge" style={{
-              fontSize: '0.7em',
-              padding: '2px 8px',
-              background: '#e0e7ff',
-              color: '#3730a3',
-              borderRadius: '12px',
-              fontWeight: 600
-            }}>
+            <span key={idx} className="council-badge">
               {resp.model.split('/').pop()}
             </span>
           ))}

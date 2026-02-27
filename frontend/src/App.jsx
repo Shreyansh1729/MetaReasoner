@@ -215,59 +215,25 @@ function App() {
         }}
       />
 
-      <div className="main-content" style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-        <header className="app-header" style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '12px 24px',
-          borderBottom: '1px solid #e5e7eb',
-          backgroundColor: '#fff'
-        }}>
-          <h1 style={{ fontSize: '1.2rem', margin: 0, color: '#111827' }}>MetaReasoner</h1>
-          <div className="view-toggles" style={{ display: 'flex', gap: '8px' }}>
+      <div className="main-content">
+        <header className="app-header">
+          <h1>MetaReasoner</h1>
+          <div className="view-toggles">
             <button
+              className={`toggle-btn ${currentView === 'chat' ? 'active' : ''}`}
               onClick={() => setCurrentView('chat')}
-              style={{
-                padding: '6px 16px',
-                borderRadius: '6px',
-                border: '1px solid #d1d5db',
-                background: currentView === 'chat' ? '#3b82f6' : '#fff',
-                color: currentView === 'chat' ? '#fff' : '#374151',
-                cursor: 'pointer',
-                fontWeight: 500
-              }}
             >
               Chat
             </button>
             <button
+              className={`toggle-btn ${currentView === 'analytics' ? 'active' : ''}`}
               onClick={() => setCurrentView('analytics')}
-              style={{
-                padding: '6px 16px',
-                borderRadius: '6px',
-                border: '1px solid #d1d5db',
-                background: currentView === 'analytics' ? '#3b82f6' : '#fff',
-                color: currentView === 'analytics' ? '#fff' : '#374151',
-                cursor: 'pointer',
-                fontWeight: 500
-              }}
             >
               Analytics
             </button>
             <button
+              className="settings-btn"
               onClick={() => setIsSettingsOpen(true)}
-              style={{
-                padding: '6px 16px',
-                borderRadius: '6px',
-                border: '1px solid #d1d5db',
-                background: '#fff',
-                color: '#374151',
-                cursor: 'pointer',
-                fontWeight: 500,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
               aria-label="Settings"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -279,7 +245,7 @@ function App() {
           </div>
         </header>
 
-        <div style={{ flex: 1, overflow: 'hidden', height: 'calc(100vh - 60px)' }}>
+        <div className="view-content">
           {currentView === 'analytics' ? (
             <Analytics />
           ) : (

@@ -161,3 +161,55 @@
   background: #ccc;
   border-color: #ccc;
 }
+
+.messages-container {
+  position: relative;
+}
+
+.export-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 6px 12px;
+  background-color: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.model-selector-panel {
+  padding: 10px 20px;
+  border-top: 1px solid #eee;
+}
+
+.model-selector-header {
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.model-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.model-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.model-warning {
+  color: #ef4444;
+  font-size: 0.8rem;
+  margin-top: 6px;
+}
